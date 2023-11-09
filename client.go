@@ -14,13 +14,13 @@ import (
 const defaultTimeout = 15 * time.Second
 
 type Client struct {
-	client          *http.Client
-	url             *url.URL
-	name            string
-	decode          func(data []byte, v interface{}) error
-	headers         []Value
-	rawResponseDump bool
-	logFunc         func(
+	client  *http.Client
+	url     *url.URL
+	name    string
+	decode  func(data []byte, v interface{}) error
+	headers []Value
+	logFunc func(
+		ctx context.Context,
 		name string,
 		method string,
 		url string,
@@ -76,9 +76,20 @@ func WithTransport(t http.RoundTripper) Option {
 	}
 }
 
-func WithName(n string) Option {
+func WithLogFunc(logFunc func(
+	ctx context.Context,
+	name string,
+	method string,
+	url string,
+	dur time.Duration,
+	statusCode int,
+	v any,
+	b []byte,
+	err error,
+),
+) Option {
 	return func(c *Client) {
-		c.name = n
+		c.logFunc = logFunc
 	}
 }
 
@@ -94,9 +105,9 @@ func WithHeaders(h ...Value) Option {
 	}
 }
 
-func WithRawResponseDump() Option {
+func WithName(n string) Option {
 	return func(c *Client) {
-		c.rawResponseDump = true
+		c.name = n
 	}
 }
 
@@ -116,6 +127,7 @@ func (c *Client) Do(ctx context.Context, r Request, v interface{}) (err error) {
 	defer func() {
 		if c.logFunc != nil {
 			c.logFunc(
+				ctx,
 				c.Name(),
 				r.Method(),
 				url,
