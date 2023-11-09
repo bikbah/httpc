@@ -187,6 +187,8 @@ func (r Request) HTTP(ctx context.Context) (*http.Request, error) {
 	return req, nil
 }
 
-func (r Request) WithErrorHandler(h func(statusCode int, b []byte) error) {
+func (r Request) WithErrorHandler(h func(statusCode int, b []byte) error) Request {
 	r.errorHandler = h
+
+	return r
 }
