@@ -115,7 +115,7 @@ func (c *Client) Name() string {
 	return c.name
 }
 
-func (c *Client) Do(ctx context.Context, r Request, v interface{}) (err error) {
+func (c *Client) Do(ctx context.Context, r Request, v interface{}, customParseFunc func(resp *http.Response, b []byte) error) (err error) {
 	r = r.WithBase(c.url)
 
 	start := time.Now().UTC()
@@ -158,6 +158,10 @@ func (c *Client) Do(ctx context.Context, r Request, v interface{}) (err error) {
 	}
 
 	statusCode = resp.StatusCode
+	if customParseFunc != nil {
+		return customParseFunc(resp, rawResponseBytes)
+	}
+
 	if resp.StatusCode >= 400 {
 		if r.errorHandler != nil {
 			return r.errorHandler(resp.StatusCode, rawResponseBytes)
